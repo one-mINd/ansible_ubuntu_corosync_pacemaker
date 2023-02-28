@@ -1,0 +1,46 @@
+---
+- name: Ensure required packages are installed.
+  apt:
+    name:
+      - pacemaker
+      - corosync
+      - fence-agents
+    state: present
+
+- name: Send corosync.conf
+  template:
+    src: corosync.conf.j2
+    dest: /etc/corosync/corosync.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart corosync
+
+- name: Send crm_conf
+  template:
+    src: crm_conf.j2
+    dest: ~/crm_conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Verify crm config file
+  command: crm verify ~/crm_conf
+
+- name: Stop all resources
+  command: crm configure property stop-all-resources=true 
+  run_once: true
+
+- name: Await 5 seconds
+  pause:
+    seconds: 5
+
+- name: Setup crm config file
+  command: crm configure load replace ~/crm_conf 
+  args:
+    stdin: 'y'
+  run_once: true
+
+- name: Start all resources
+  command: crm configure property stop-all-resources=false
+  run_once: true

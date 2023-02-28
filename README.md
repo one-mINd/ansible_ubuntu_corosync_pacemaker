@@ -1,1 +1,13 @@
-# ansible_ubuntu_corosync_pacemaker
+Ubuntu Corosync Pacemaker
+=========
+
+
+Role Variables
+--------------
+None for now
+
+
+License
+-------
+
+BSD
