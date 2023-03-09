@@ -1,4 +1,17 @@
 ---
+# Corosync configuration file
 corosync_conf: {}
 
+# CRM configuration file that be loaded
 crm_conf: ""
+
+# List of vendor custom resources. They will configured to target hosts and placed at files/vendor in repo.
+vendor_custom_resources: []
+
+# Dictionary of your own custom resources
+# Example:
+# custom_ocf_resources:
+#   my_resource: !unsafe |
+#     #!/bin/bash
+#     echo "Thats my resource!"
+custom_ocf_resources: {}

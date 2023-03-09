@@ -1,0 +1,79 @@
+- name: Send corosync.conf
+  template:
+    src: corosync.conf.j2
+    dest: /etc/corosync/corosync.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart corosync
+
+- name: Check old crm_conf exist
+  stat:
+    path: ~/crm_conf
+  register: crm_exist
+
+- name: Backup old crm configuration
+  copy:
+    src: ~/crm_conf
+    dest: ~/backup_crm_conf
+    remote_src: yes
+  when: crm_exist.stat.exists
+
+- name: Send crm_conf
+  template:
+    src: crm_conf.j2
+    dest: ~/crm_conf
+    owner: root
+    group: root
+    mode: 0644
+  register: crm_conf
+
+- name: Stop all resources
+  command: crm configure property stop-all-resources=true 
+  run_once: true
+  when: crm_conf.changed
+
+- name: Await 5 seconds
+  pause:
+    seconds: 5
+  when: crm_conf.changed
+
+- name: Setup crm config file
+  command: crm configure load replace ~/crm_conf 
+  args:
+    stdin: 'y'
+  run_once: true
+  register: setup_status
+  ignore_errors: yes
+  when: crm_conf.changed
+
+- name: Roll back to old conf
+  copy:
+    src: ~/backup_crm_conf
+    dest: ~/crm_conf
+    remote_src: yes
+  when: 
+    - setup_status is failed
+    - crm_exist.stat.exists
+
+- name: Delete backup crm conf
+  file:
+    state: absent
+    path: ~/backup_crm_conf
+  when: crm_exist.stat.exists
+
+- name: Setup old crm config file
+  command: crm configure load replace ~/crm_conf 
+  args:
+    stdin: 'y'
+  run_once: true
+  register: setup_status
+  ignore_errors: yes
+  when: 
+    - setup_status is failed
+    - crm_exist.stat.exists
+
+- name: Start all resources
+  command: crm configure property stop-all-resources=false
+  run_once: true
+  when: crm_conf.changed

@@ -6,41 +6,19 @@
       - corosync
       - fence-agents
     state: present
+    update_cache: yes
 
-- name: Send corosync.conf
-  template:
-    src: corosync.conf.j2
-    dest: /etc/corosync/corosync.conf
-    owner: root
-    group: root
-    mode: 0644
-  notify: restart corosync
+- name: Send vendor ocf resources
+  include_tasks: send_vendor_ocf_resources.yml
+  with_items: "{{ vendor_custom_resources }}"
+  loop_control: 
+    loop_var: resource
 
-- name: Send crm_conf
-  template:
-    src: crm_conf.j2
-    dest: ~/crm_conf
-    owner: root
-    group: root
-    mode: 0644
+- name: Send custom ocf resources
+  include_tasks: send_custom_ocf_resources.yml
+  with_dict: "{{ custom_ocf_resources }}"
+  loop_control: 
+    loop_var: resource
 
-- name: Verify crm config file
-  command: crm verify ~/crm_conf
-
-- name: Stop all resources
-  command: crm configure property stop-all-resources=true 
-  run_once: true
-
-- name: Await 5 seconds
-  pause:
-    seconds: 5
-
-- name: Setup crm config file
-  command: crm configure load replace ~/crm_conf 
-  args:
-    stdin: 'y'
-  run_once: true
-
-- name: Start all resources
-  command: crm configure property stop-all-resources=false
-  run_once: true
+- name: Configure cluster
+  include_tasks: configure_cluster.yml
