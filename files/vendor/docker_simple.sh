@@ -33,17 +33,13 @@ END
 }
 
 if [ "start" == "$param" ] ; then
-  echo "container $CONTAINER started" >> /root/my_resource
   docker start $CONTAINER
   exit 0
 elif [ "stop" == "$param" ] ; then
-  echo "container $CONTAINER stoped" >> /root/my_resource
   docker stop $CONTAINER
   exit 0;
 elif [ "monitor" == "$param" ] ; then
   container_status=$(docker inspect $CONTAINER --format {{.State.Running}})
-  echo "request status" >> /root/my_resource
-  echo $node_status >> /root/my_resource
   if [[ $container_status == "true" ]]; then
     exit 0
   else
@@ -53,6 +49,5 @@ elif [ "meta-data" == "$param" ] ; then
   meta_data
   exit 0
 else
-  echo "no such command $param" >> /root/my_resource
   exit 1;
 fi
